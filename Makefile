@@ -2,7 +2,7 @@ install:
 	npm install
 
 lint:
-	npm run eslint ".js" "src/"
+	npm run eslint .
 
 publish:
 	npm publish
