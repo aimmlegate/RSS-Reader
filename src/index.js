@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { isURL } from 'validator';
@@ -11,6 +12,7 @@ let RssData = [];
 const feedForm = document.getElementById('feed-form');
 const resultsCont = document.getElementById('results');
 const errMessage = document.getElementById('error-message');
+const modalDescription = document.getElementById('modal-description');
 const corsProxy = 'https://cors-anywhere.herokuapp.com';
 const parser = new DOMParser();
 const addedFeeds = new Set();
@@ -39,12 +41,16 @@ const parseHtmlCollection = (coll) => {
   };
 };
 
+const findInRss = (uid, data) => data.filter(el => el.id === uid)[0];
+
 const renderFeedItem = (children) => {
   const result = children.map((child) => {
-    const { name, link } = child;
+    const { name, link, id } = child;
     const template =
     `
-    <li class="list-group-item"><a href="${link}">${name}</a></li>
+    <li class="list-group-item d-flex justify-content-between align-items-center" data-uid='${id}'>
+      <a href="${link}">${name}</a><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalLive">Info</button>
+    </li>
     `;
     return template;
   });
@@ -53,10 +59,15 @@ const renderFeedItem = (children) => {
 
 const renderFeeds = (data) => {
   const result = data.map((el) => {
-    const { name, description, children } = el;
+    const {
+      name,
+      description,
+      children,
+      id,
+    } = el;
     const template =
     `
-    <div class="jumbotron">
+    <div class="jumbotron" data-uid='${id}'>
       <h2 class="display-5">${name}</h2>
       <p class="lead">${description}</p>
       <ul class="list-group">
@@ -89,10 +100,10 @@ const feedHandler = (event) => {
         const { data } = resp;
         const parsedData = parser.parseFromString(data, 'application/xml');
         if (!checkParseErr((parsedData))) {
-          addedFeeds.add(formData.feedUrl);
           RssData = [...RssData, parseHtmlCollection(parsedData)];
           resultsCont.innerHTML = renderFeeds(RssData);
           input.value = '';
+          addedFeeds.add(formData.feedUrl);
         } else {
           input.classList.add('is-invalid');
           errMessage.textContent = 'Parsing error';
@@ -106,4 +117,20 @@ const feedHandler = (event) => {
   }
 };
 
+const handler = (event) => {
+  const { target } = event;
+  if (target.dataset.toggle === 'modal') {
+    const parent = target.parentElement;
+    const mainParent = parent.closest('.jumbotron');
+    const itemUid = parent.dataset.uid;
+    const feedUid = mainParent.dataset.uid;
+    const feed = findInRss(feedUid, RssData);
+    const { description } = findInRss(itemUid, feed.children);
+    modalDescription.textContent = description;
+    $('#descriptionModal').modal('toggle');
+  }
+};
+
 feedForm.addEventListener('submit', feedHandler);
+
+resultsCont.addEventListener('click', handler);
