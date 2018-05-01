@@ -1,6 +1,6 @@
 {
   "name": "aimml-rss-reaser",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "rss-reaser",
   "main": "index.js",
   "scripts": {
@@ -57,6 +57,7 @@
     "bootstrap": "^4.0.0",
     "lodash": "^4.17.10",
     "popper.js": "^1.14.3",
+    "uuid": "^3.2.1",
     "validator": "^9.4.1"
   }
 }

@@ -3,12 +3,15 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { isURL } from 'validator';
 import _ from 'lodash';
 import axios from 'axios';
+import uuid from 'uuid/v4';
+
 
 let RssData = [];
 
 const feedForm = document.getElementById('feed-form');
 const resultsCont = document.getElementById('results');
-const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+const errMessage = document.getElementById('error-message');
+const corsProxy = 'https://cors-anywhere.herokuapp.com';
 const parser = new DOMParser();
 const addedFeeds = new Set();
 
@@ -18,9 +21,7 @@ const getNodeTagVal = (node, tag) => {
 };
 
 const checkParseErr = (node) => {
-  console.log(node);
   const nd = node.getElementsByTagName('parsererror');
-  console.log(nd);
   return (!(nd.length === 0));
 };
 
@@ -30,15 +31,16 @@ const parseHtmlCollection = (coll) => {
   const description = getNodeTagVal(coll, 'description');
   const link = getNodeTagVal(coll, 'link');
   return {
+    id: uuid(),
     name,
     description,
     link,
-    children: [items.map(el => parseHtmlCollection(el))],
+    children: items.map(el => parseHtmlCollection(el)),
   };
 };
 
 const renderFeedItem = (children) => {
-  const result = children[0].map((child) => {
+  const result = children.map((child) => {
     const { name, link } = child;
     const template =
     `
@@ -72,25 +74,34 @@ const feedHandler = (event) => {
   const { target } = event;
   const input = target.querySelector('#feed-input');
   const formData = _.fromPairs([...new FormData(target)]);
-  if (!(isURL(formData.feedUrl)) || addedFeeds.has(formData.feedUrl)) {
+  if (!(isURL(formData.feedUrl))) {
     input.classList.add('is-invalid');
+    errMessage.textContent = 'Invalid URL';
+  } else if (addedFeeds.has(formData.feedUrl)) {
+    input.classList.add('is-invalid');
+    errMessage.textContent = 'Feed already exist';
   } else {
-    addedFeeds.add(formData.feedUrl);
     input.classList.remove('is-invalid');
-    const ulr = new URL(formData.feedUrl);
-    axios(`${corsProxy}${ulr.host}${ulr.pathname}`, {
-      method: 'GET',
-    })
+    const proxyUrl = new URL('/', corsProxy);
+    const ulr = new URL(formData.feedUrl.trim().toLowerCase());
+    axios.get(new URL(`${ulr.host}${ulr.pathname}`, proxyUrl), { timeout: 10000 })
       .then((resp) => {
         const { data } = resp;
         const parsedData = parser.parseFromString(data, 'application/xml');
         if (!checkParseErr((parsedData))) {
+          addedFeeds.add(formData.feedUrl);
           RssData = [...RssData, parseHtmlCollection(parsedData)];
           resultsCont.innerHTML = renderFeeds(RssData);
           input.value = '';
         } else {
           input.classList.add('is-invalid');
+          errMessage.textContent = 'Parsing error';
         }
+      })
+      .catch((err) => {
+        input.classList.add('is-invalid');
+        errMessage.textContent = 'Network error';
+        console.error(err);
       });
   }
 };
