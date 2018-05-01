@@ -49,6 +49,7 @@ const getAjaxData = (url, cors) => {
       state.setFormError('Network error');
       input.classList.add('is-invalid');
       errMessage.textContent = state.getFormMessage();
+      console.error(err);
     });
 };
 
