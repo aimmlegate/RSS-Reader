@@ -1,23 +1,48 @@
+import { findUniq } from './helpers';
+
 export default {
   rssData: [],
-  addedFeeds: new Set(),
+  timeout: 5000,
   formStatus: {
     error: false,
     message: '',
+  },
+  getData() {
+    return this.rssData;
+  },
+  getAddedFeeds() {
+    const feedData = this.getData();
+    return feedData.map(feed => feed.url);
   },
   addData(newData) {
     this.rssData = [...this.rssData, newData];
     return this;
   },
-  getData() {
-    return this.rssData;
+  getFeed(feedId) {
+    return this.rssData.filter(feed => feed.id === feedId)[0];
   },
-  newFeed(feed) {
-    this.addedFeeds.add(feed);
+  getFeedItems(feedId) {
+    const thisFeed = this.getFeed(feedId);
+    return thisFeed.children;
+  },
+  addFeedItems(feedId, newItems) {
+    const thisFeed = this.getFeed(feedId);
+    const thisFeedItems = this.getFeedItems(feedId);
+    const addedItems = findUniq(thisFeedItems, newItems);
+    thisFeed.children = [...thisFeedItems, ...addedItems];
+  },
+  addNewFeed(feedId, feedUrl) {
+    const thisFeed = this.getFeed(feedId);
+    thisFeed.url = feedUrl;
     return this;
   },
-  hasFeed(feed) {
-    return this.addedFeeds.has(feed);
+  getIdbyUrl(feedUrl) {
+    const feeds = this.getData();
+    const findedFeed = feeds.filter(feed => feed.url === feedUrl)[0];
+    return findedFeed.id;
+  },
+  hasFeed(feedUrl) {
+    return this.rssData.some(feed => feed.url === feedUrl);
   },
   getFormErr() {
     return this.formStatus.error;

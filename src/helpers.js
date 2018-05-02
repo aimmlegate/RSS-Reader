@@ -15,8 +15,10 @@ const parseHtmlCollection = (coll) => {
   const name = getNodeTagVal(coll, 'title');
   const description = getNodeTagVal(coll, 'description');
   const link = getNodeTagVal(coll, 'link');
+  const guid = getNodeTagVal(coll, 'guid');
   return {
     id: uuid(),
+    guid,
     name,
     description,
     link,
@@ -24,8 +26,13 @@ const parseHtmlCollection = (coll) => {
   };
 };
 
+const findUniq = (oldFeed, newFeed) => {
+  const setOldFeed = new Set(oldFeed.map(el => el.guid));
+  return newFeed.filter(el => !setOldFeed.has(el.guid));
+};
+
 const findInRss = (uid, data) => data.filter(el => el.id === uid)[0];
 
 const normalizeUrl = url => url.trim().toLowerCase();
 
-export { getNodeTagVal, checkParseErr, parseHtmlCollection, findInRss, normalizeUrl };
+export { getNodeTagVal, checkParseErr, parseHtmlCollection, findInRss, normalizeUrl, findUniq };

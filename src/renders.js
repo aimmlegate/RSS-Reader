@@ -1,4 +1,4 @@
-const renderFeedItem = (children) => {
+const renderFeedItems = (children) => {
   const result = children.map((child) => {
     const { name, link, id } = child;
     const template =
@@ -25,8 +25,8 @@ const renderFeeds = (data) => {
     <div class="jumbotron" data-uid='${id}'>
       <h2 class="display-5">${name}</h2>
       <p class="lead">${description}</p>
-      <ul class="list-group">
-        ${renderFeedItem(children)}
+      <ul class="list-group feedContent">
+        ${renderFeedItems(children)}
       </ul>
     </div>
     `;
@@ -35,4 +35,4 @@ const renderFeeds = (data) => {
   return result.join('\n');
 };
 
-export { renderFeedItem, renderFeeds };
+export { renderFeedItems, renderFeeds };
