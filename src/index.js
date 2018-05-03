@@ -5,22 +5,18 @@ import { isURL } from 'validator';
 import _ from 'lodash';
 import axios from 'axios';
 import state from './state';
-import { renderFeedItems, renderFeeds } from './renders';
+import { renderFeedItems, renderFeeds, htmlRender } from './renders';
 import { checkParseErr, parseHtmlCollection, findInRss, normalizeUrl } from './helpers';
 
 const resultsCont = document.getElementById('results');
 const feedForm = document.getElementById('feed-form');
 const errMessage = document.getElementById('error-message');
 const modalDescription = document.getElementById('modal-description');
+const updateTimeSelect = document.getElementById('update-time-select');
+
 const input = document.querySelector('#feed-input');
 const corsProxy = 'http://cors-proxy.htmldriven.com';
 const parser = new DOMParser();
-
-const htmlRender = (str, target) => {
-  input.value = '';
-  const renderTo = target;
-  renderTo.innerHTML = str;
-};
 
 const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
   const renderDispatcher = {
@@ -29,6 +25,7 @@ const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
       const data = state.getData();
       const renderedStr = renderFeeds(data);
       htmlRender(renderedStr, targetCont);
+      input.value = '';
     },
     updateFeed: (targetId) => {
       const targetCont = document.querySelector(`[data-uid="${targetId}"]`).querySelector('.feedContent');
@@ -37,6 +34,7 @@ const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
       htmlRender(renderedStr, targetCont);
     },
   };
+
   const dataDispatcher = {
     newFeed: (data, feedUrl) => {
       const parsed = parseHtmlCollection(data);
@@ -48,9 +46,10 @@ const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
       state.addFeedItems(id, parsed.children);
     },
   };
+
   const proxyUrl = new URL('/?url=', cors);
   const newUrl = normalizeUrl(url);
-  axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 10000 })
+  axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 })
     .then((resp) => {
       const { body } = resp.data;
       const parsedData = parser.parseFromString(body, 'application/xml');
@@ -84,9 +83,9 @@ const startFeedUpdater = () => {
     const feedId = state.getIdbyUrl(feedUrl);
     getAxiosData(feedUrl, corsProxy, { type: 'updateFeed', id: feedId });
   });
-  const newTimeoutId = setTimeout(startFeedUpdater, 5000);
+  const timeout = state.getTimeout();
+  setTimeout(startFeedUpdater, timeout);
 };
-
 
 const feedHandler = (event) => {
   event.preventDefault();
@@ -108,7 +107,6 @@ const feedHandler = (event) => {
   }
 };
 
-
 const handler = (event) => {
   const { target } = event;
   if (target.dataset.toggle === 'modal') {
@@ -123,6 +121,15 @@ const handler = (event) => {
   }
 };
 
-startFeedUpdater();
+const updateSelectHandler = (event) => {
+  const targetForm = event.target.form;
+  const formData = _.fromPairs([...new FormData(targetForm)]);
+  state.setTimeout(parseInt(formData.updateTime, 10));
+  console.log(state.getTimeout());
+};
+
 feedForm.addEventListener('submit', feedHandler);
 resultsCont.addEventListener('click', handler);
+updateTimeSelect.addEventListener('change', updateSelectHandler);
+
+startFeedUpdater();

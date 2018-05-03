@@ -10,6 +10,13 @@ export default {
   getData() {
     return this.rssData;
   },
+  getTimeout() {
+    return this.timeout;
+  },
+  setTimeout(newTimeout) {
+    this.timeout = newTimeout;
+    return this;
+  },
   getAddedFeeds() {
     const feedData = this.getData();
     return feedData.map(feed => feed.url);

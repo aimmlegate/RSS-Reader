@@ -1,3 +1,8 @@
+const htmlRender = (str, target) => {
+  const renderTo = target;
+  renderTo.innerHTML = str;
+};
+
 const renderFeedItems = (children) => {
   const result = children.map((child) => {
     const { name, link, id } = child;
@@ -35,4 +40,4 @@ const renderFeeds = (data) => {
   return result.join('\n');
 };
 
-export { renderFeedItems, renderFeeds };
+export { renderFeedItems, renderFeeds, htmlRender };
