@@ -1,6 +1,6 @@
 const htmlToElement = (html) => {
   const template = document.createElement('template');
-  const appendedHtml = html.trim(); 
+  const appendedHtml = html.trim();
   template.innerHTML = appendedHtml;
   return template.content.firstChild;
 };
@@ -18,7 +18,6 @@ export const htmlAppendRender = (str, target) => {
   }
 };
 
-
 export const renderFeedItems = (children) => {
   const result = children.map((child) => {
     const { name, link, id } = child;
@@ -32,7 +31,6 @@ export const renderFeedItems = (children) => {
   });
   return result.join('\n');
 };
-
 
 export const renderFeeds = (data) => {
   const result = data.map((el) => {
