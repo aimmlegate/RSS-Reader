@@ -67,7 +67,7 @@ export const renderFeed = (data, feedId) => {
   } = feedData;
   const template =
     `
-    <div class="" id="${id}" role="tabpanel" aria-labelledby="v-pills-home-tab">
+    <div class="tab-pane" id="${id}" role="tabpanel" aria-labelledby="v-pills-home-tab">
       <div class="jumbotron" data-uid='${id}'>
         <h2 class="display-5">${name}</h2>
         <p class="lead">${description}</p>
@@ -85,7 +85,7 @@ export const renderTabControl = (data, feedId) => {
   const { name, id } = feedData;
   const template =
   `
-  <a class="nav-link" id="v-pills-home-tab" data-toggle="pill" href="#${id}" role="tab" aria-controls="v-pills-home" aria-selected="true">${name}</a>
+  <a class="nav-link" data-tab="${id}" data-toggle="pill" href="#${id}" role="tab" aria-controls="v-pills-home" aria-selected="true">${name}</a>
   `;
   return template;
 };

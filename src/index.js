@@ -32,6 +32,7 @@ const renderDispatcher = {
     htmlAppendRender(renderedStr, targetCont);
     htmlAppendRender(renderedControlStr, targetControlCont);
     input.value = '';
+    $('.nav-pills').find(`[data-tab='${feedId}']`).tab('show');
   },
   updateFeed: (targetId) => {
     const targetCont = document.querySelector(`[data-uid="${targetId}"]`).querySelector('.feedContent');
@@ -79,7 +80,7 @@ const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
       }
     })
     .catch((err) => {
-      state.setFormError('Network error');
+      state.setFormError('Error');
       input.classList.add('is-invalid');
       errMessage.textContent = state.getFormMessage();
       console.error(err);
@@ -92,9 +93,9 @@ const startFeedUpdater = () => {
     const feedId = state.getIdbyUrl(feedUrl);
     getAxiosData(feedUrl, corsProxy, { type: 'updateFeed', id: feedId });
   });
-  const timeout = state.getTimeout();
-  setTimeout(startFeedUpdater, timeout);
+  setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10));
 };
+
 
 const feedHandler = (event) => {
   event.preventDefault();
@@ -134,8 +135,8 @@ const updateSelectHandler = (event) => {
   const targetForm = event.target.form;
   const formData = _.fromPairs([...new FormData(targetForm)]);
   state.setTimeout(parseInt(formData.updateTime, 10));
-  console.log(state.getTimeout());
 };
+
 
 feedForm.addEventListener('submit', feedHandler);
 resultsCont.addEventListener('click', handler);
