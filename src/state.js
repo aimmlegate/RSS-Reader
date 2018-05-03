@@ -37,6 +37,7 @@ export default {
     const thisFeedItems = this.getFeedItems(feedId);
     const addedItems = findUniq(thisFeedItems, newItems);
     thisFeed.children = [...thisFeedItems, ...addedItems];
+    return addedItems;
   },
   addNewFeed(feedId, feedUrl) {
     const thisFeed = this.getFeed(feedId);

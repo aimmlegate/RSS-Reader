@@ -1,13 +1,29 @@
-const htmlRender = (str, target) => {
+const htmlToElement = (html) => {
+  const template = document.createElement('template');
+  const appendedHtml = html.trim(); 
+  template.innerHTML = appendedHtml;
+  return template.content.firstChild;
+};
+
+export const htmlRender = (str, target) => {
   const renderTo = target;
   renderTo.innerHTML = str;
 };
 
-const renderFeedItems = (children) => {
+export const htmlAppendRender = (str, target) => {
+  const renderTo = target;
+  const element = htmlToElement(str);
+  if (element) {
+    renderTo.appendChild(element);
+  }
+};
+
+
+export const renderFeedItems = (children) => {
   const result = children.map((child) => {
     const { name, link, id } = child;
     const template =
-    `
+      `
     <li class="list-group-item d-flex justify-content-between align-items-center" data-uid='${id}'>
       <a href="${link}">${name}</a><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#exampleModalLive">Info</button>
     </li>
@@ -17,7 +33,8 @@ const renderFeedItems = (children) => {
   return result.join('\n');
 };
 
-const renderFeeds = (data) => {
+
+export const renderFeeds = (data) => {
   const result = data.map((el) => {
     const {
       name,
@@ -26,7 +43,7 @@ const renderFeeds = (data) => {
       id,
     } = el;
     const template =
-    `
+      `
     <div class="jumbotron" data-uid='${id}'>
       <h2 class="display-5">${name}</h2>
       <p class="lead">${description}</p>
@@ -40,4 +57,35 @@ const renderFeeds = (data) => {
   return result.join('\n');
 };
 
-export { renderFeedItems, renderFeeds, htmlRender };
+export const renderFeed = (data, feedId) => {
+  const feedData = data.filter(el => el.id === feedId)[0];
+  const {
+    name,
+    description,
+    children,
+    id,
+  } = feedData;
+  const template =
+    `
+    <div class="" id="${id}" role="tabpanel" aria-labelledby="v-pills-home-tab">
+      <div class="jumbotron" data-uid='${id}'>
+        <h2 class="display-5">${name}</h2>
+        <p class="lead">${description}</p>
+        <ul class="list-group feedContent">
+          ${renderFeedItems(children)}
+        </ul>
+      </div>
+    </div>
+    `;
+  return template;
+};
+
+export const renderTabControl = (data, feedId) => {
+  const feedData = data.filter(el => el.id === feedId)[0];
+  const { name, id } = feedData;
+  const template =
+  `
+  <a class="nav-link" id="v-pills-home-tab" data-toggle="pill" href="#${id}" role="tab" aria-controls="v-pills-home" aria-selected="true">${name}</a>
+  `;
+  return template;
+};

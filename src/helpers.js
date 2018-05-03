@@ -1,4 +1,4 @@
-import uuid from 'uuid/v4';
+import md5 from 'md5';
 
 const getNodeTagVal = (node, tag) => {
   const nd = node.getElementsByTagName(tag)[0];
@@ -17,7 +17,7 @@ const parseHtmlCollection = (coll) => {
   const link = getNodeTagVal(coll, 'link');
   const guid = getNodeTagVal(coll, 'guid');
   return {
-    id: uuid(),
+    id: md5(guid),
     guid,
     name,
     description,
