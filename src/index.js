@@ -8,24 +8,53 @@ import state from './state';
 import {
   renderFeedItems,
   htmlAppendRender,
+  htmlRender,
   renderFeed,
   renderTabControl,
+  renderAllFeeds,
+  renderAllTabControls,
 } from './renders';
 import { checkParseErr, parseHtmlCollection, findInRss, normalizeUrl } from './helpers';
+import { toStorage, getFromStorage } from './local';
+
 
 const resultsCont = document.getElementById('results');
 const feedForm = document.getElementById('feed-form');
 const errMessage = document.getElementById('error-message');
 const modalDescription = document.getElementById('modal-description');
 const updateTimeSelect = document.getElementById('update-time-select');
+const targetCont = document.getElementById('v-pills-tabContent');
+const targetControlCont = document.getElementById('v-pills-tab');
+const eraseAllButton = document.getElementById('eraseAll');
 const input = document.querySelector('#feed-input');
 const corsProxy = 'http://cors-proxy.htmldriven.com';
 const parser = new DOMParser();
 
+if (state.getData().length === 0) {
+  const dataFromStorage = getFromStorage();
+  if (dataFromStorage) {
+    state.setFullStateData(dataFromStorage);
+  }
+}
+
+const preRender = () => {
+  const data = state.getData();
+  const renderedStr = renderAllFeeds(data);
+  const renderedControlStr = renderAllTabControls(data);
+  state.setFormNormal('');
+  htmlRender(renderedStr, targetCont);
+  htmlRender(renderedControlStr, targetControlCont);
+  $('#v-pills-tab a:first-child').tab('show');
+  if (data.length === 0) {
+    eraseAllButton.setAttribute('disabled', 'disabled');
+  }
+};
+
+preRender();
+
 const renderDispatcher = {
   newFeed: (feedId) => {
-    const targetCont = document.getElementById('v-pills-tabContent');
-    const targetControlCont = document.getElementById('v-pills-tab');
+    eraseAllButton.removeAttribute('disabled', 'disabled');
     const data = state.getData();
     const renderedStr = renderFeed(data, feedId);
     const renderedControlStr = renderTabControl(data, feedId);
@@ -35,13 +64,13 @@ const renderDispatcher = {
     $('.nav-pills').find(`[data-tab='${feedId}']`).tab('show');
   },
   updateFeed: (targetId) => {
-    const targetCont = document.querySelector(`[data-uid="${targetId}"]`).querySelector('.feedContent');
+    const targetUpdateCont = document.querySelector(`[data-uid="${targetId}"]`).querySelector('.feedContent');
     const data = state.getFeedItems(targetId);
     const alredyRendered = [...targetCont.querySelectorAll('li')];
     const alredyRenderedSet = new Set(alredyRendered.map(el => el.dataset.uid));
     const newData = data.filter(el => !alredyRenderedSet.has(el.id));
     const renderedStr = renderFeedItems(newData);
-    htmlAppendRender(renderedStr, targetCont);
+    htmlAppendRender(renderedStr, targetUpdateCont);
   },
 };
 
@@ -65,32 +94,28 @@ const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
       const parsedData = parser.parseFromString(body, 'application/xml');
       if (checkParseErr((parsedData))) {
         state.setFormError('Parsing error');
+      } else {
+        const data = parseHtmlCollection(parsedData);
+        dataDispatcher[status.type](data, url, status.id);
       }
-      const data = parseHtmlCollection(parsedData);
-      dataDispatcher[status.type](data, url, status.id);
-      return data;
-    })
-    .then((data) => {
       if (state.getFormErr()) {
         input.classList.add('is-invalid');
         errMessage.textContent = state.getFormMessage();
       } else {
         state.setFormNormal('Rendered');
         input.classList.remove('is-invalid');
+        const data = parseHtmlCollection(parsedData);
         renderDispatcher[status.type](status.id || data.id);
       }
-      if (status.type === 'updateFeed') {
-        state.setUpdateStatusFin(status.id, true);
-      }
+      state.setUpdateStatusFin(status.id, true);
+      toStorage(state.getFullStateData());
     })
     .catch((err) => {
       state.setFormError('Error');
       input.classList.add('is-invalid');
       errMessage.textContent = state.getFormMessage();
       console.error(err);
-      if (status.type === 'updateFeed') {
-        state.setUpdateStatusFin(status.id, true);
-      }
+      state.setUpdateStatusFin(status.id, true);
       throw err;
     });
 };
@@ -147,9 +172,15 @@ const updateSelectHandler = (event) => {
   state.setTimeout(parseInt(formData.updateTime, 10));
 };
 
+const eraseAllHandler = () => {
+  state.eraseData();
+  toStorage(state.getFullStateData());
+  preRender();
+};
 
 feedForm.addEventListener('submit', feedHandler);
 resultsCont.addEventListener('click', handler);
 updateTimeSelect.addEventListener('change', updateSelectHandler);
+eraseAllButton.addEventListener('click', eraseAllHandler);
 
 startFeedUpdater();

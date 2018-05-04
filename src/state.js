@@ -1,17 +1,28 @@
 import { findUniq } from './helpers';
 
 export default {
-  rssData: [],
-  timeout: 5000,
-  formStatus: {
-    error: false,
-    message: '',
+  data: {
+    rssData: [],
+    timeout: 5000,
+    formStatus: {
+      error: false,
+      message: '',
+    },
+  },
+  getFullStateData() {
+    return this.data;
+  },
+  setFullStateData(newData) {
+    this.data = newData;
   },
   getData() {
-    return this.rssData;
+    return this.data.rssData;
+  },
+  eraseData() {
+    this.data.rssData = [];
   },
   getTimeout() {
-    return this.timeout;
+    return this.data.timeout;
   },
   setTimeout(newTimeout) {
     this.timeout = newTimeout;
@@ -20,11 +31,11 @@ export default {
   addData(newData) {
     const setStatusData = newData;
     setStatusData.updStatus = true;
-    this.rssData = [...this.rssData, setStatusData];
+    this.data.rssData = [...this.data.rssData, setStatusData];
     return this;
   },
   getFeed(feedId) {
-    return this.rssData.filter(feed => feed.id === feedId)[0];
+    return this.data.rssData.filter(feed => feed.id === feedId)[0];
   },
   getFeedItems(feedId) {
     const thisFeed = this.getFeed(feedId);
@@ -43,22 +54,22 @@ export default {
     return this;
   },
   hasFeed(feedUrl) {
-    return this.rssData.some(feed => feed.url === feedUrl);
+    return this.data.rssData.some(feed => feed.url === feedUrl);
   },
   getFormErr() {
-    return this.formStatus.error;
+    return this.data.formStatus.error;
   },
   getFormMessage() {
-    return this.formStatus.message;
+    return this.data.formStatus.message;
   },
   setFormError(message) {
-    this.formStatus.error = true;
-    this.formStatus.message = message;
+    this.data.formStatus.error = true;
+    this.data.formStatus.message = message;
     return this;
   },
   setFormNormal(message) {
-    this.formStatus.error = false;
-    this.formStatus.message = message;
+    this.data.formStatus.error = false;
+    this.data.formStatus.message = message;
     return this;
   },
   setUpdateStatusFin(feedId, status) {

@@ -32,29 +32,6 @@ export const renderFeedItems = (children) => {
   return result.join('\n');
 };
 
-export const renderFeeds = (data) => {
-  const result = data.map((el) => {
-    const {
-      name,
-      description,
-      children,
-      id,
-    } = el;
-    const template =
-      `
-    <div class="jumbotron" data-uid='${id}'>
-      <h2 class="display-5">${name}</h2>
-      <p class="lead">${description}</p>
-      <ul class="list-group feedContent">
-        ${renderFeedItems(children)}
-      </ul>
-    </div>
-    `;
-    return template;
-  });
-  return result.join('\n');
-};
-
 export const renderFeed = (data, feedId) => {
   const feedData = data.filter(el => el.id === feedId)[0];
   const {
@@ -87,3 +64,9 @@ export const renderTabControl = (data, feedId) => {
   `;
   return template;
 };
+
+
+export const renderAllFeeds = allData => allData.map(feed => renderFeed(allData, feed.id)).join('\n');
+
+
+export const renderAllTabControls = allData => allData.map(feed => renderTabControl(allData, feed.id)).join('\n');
