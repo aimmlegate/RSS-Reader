@@ -48,7 +48,7 @@ const renderDispatcher = {
 const dataDispatcher = {
   newFeed: (data, feedUrl) => {
     state.addData(data);
-    state.addNewFeed(data.id, feedUrl);
+    state.addNewFeedUrl(data.id, feedUrl);
   },
   updateFeed: (data, feedUrl, id) => {
     state.addFeedItems(id, data.children);
@@ -56,27 +56,31 @@ const dataDispatcher = {
 };
 
 const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
+  state.setUpdateStatusFin(status.id, false);
   const proxyUrl = new URL('/?url=', cors);
   const newUrl = normalizeUrl(url);
   axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 })
     .then((resp) => {
       const { body } = resp.data;
       const parsedData = parser.parseFromString(body, 'application/xml');
-      if (!checkParseErr((parsedData))) {
-        const data = parseHtmlCollection(parsedData);
-        dataDispatcher[status.type](data, url, status.id);
-      } else {
+      if (checkParseErr((parsedData))) {
         state.setFormError('Parsing error');
       }
-
+      const data = parseHtmlCollection(parsedData);
+      dataDispatcher[status.type](data, url, status.id);
+      return data;
+    })
+    .then((data) => {
       if (state.getFormErr()) {
         input.classList.add('is-invalid');
         errMessage.textContent = state.getFormMessage();
       } else {
         state.setFormNormal('Rendered');
         input.classList.remove('is-invalid');
-        const data = parseHtmlCollection(parsedData);
         renderDispatcher[status.type](status.id || data.id);
+      }
+      if (status.type === 'updateFeed') {
+        state.setUpdateStatusFin(status.id, true);
       }
     })
     .catch((err) => {
@@ -84,23 +88,29 @@ const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
       input.classList.add('is-invalid');
       errMessage.textContent = state.getFormMessage();
       console.error(err);
+      if (status.type === 'updateFeed') {
+        state.setUpdateStatusFin(status.id, true);
+      }
+      throw err;
     });
 };
 
 const startFeedUpdater = () => {
-  const currentFeeds = state.getAddedFeeds();
-  currentFeeds.forEach((feedUrl) => {
-    const feedId = state.getIdbyUrl(feedUrl);
-    getAxiosData(feedUrl, corsProxy, { type: 'updateFeed', id: feedId });
+  const currentFeeds = state.getData();
+  currentFeeds.forEach((feed) => {
+    const { url, id } = feed;
+    if (state.getUpdateStatusFin(id)) {
+      getAxiosData(url, corsProxy, { type: 'updateFeed', id });
+    }
   });
   setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10));
 };
-
 
 const feedHandler = (event) => {
   event.preventDefault();
   const { target } = event;
   const formData = _.fromPairs([...new FormData(target)]);
+
   if (!(isURL(formData.feedUrl))) {
     state.setFormError('Invalid URL');
   } else if (state.hasFeed(normalizeUrl(formData.feedUrl))) {

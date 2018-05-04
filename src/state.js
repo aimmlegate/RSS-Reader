@@ -17,12 +17,10 @@ export default {
     this.timeout = newTimeout;
     return this;
   },
-  getAddedFeeds() {
-    const feedData = this.getData();
-    return feedData.map(feed => feed.url);
-  },
   addData(newData) {
-    this.rssData = [...this.rssData, newData];
+    const setStatusData = newData;
+    setStatusData.updStatus = true;
+    this.rssData = [...this.rssData, setStatusData];
     return this;
   },
   getFeed(feedId) {
@@ -39,15 +37,10 @@ export default {
     thisFeed.children = [...thisFeedItems, ...addedItems];
     return addedItems;
   },
-  addNewFeed(feedId, feedUrl) {
+  addNewFeedUrl(feedId, feedUrl) {
     const thisFeed = this.getFeed(feedId);
     thisFeed.url = feedUrl;
     return this;
-  },
-  getIdbyUrl(feedUrl) {
-    const feeds = this.getData();
-    const findedFeed = feeds.filter(feed => feed.url === feedUrl)[0];
-    return findedFeed.id;
   },
   hasFeed(feedUrl) {
     return this.rssData.some(feed => feed.url === feedUrl);
@@ -66,6 +59,20 @@ export default {
   setFormNormal(message) {
     this.formStatus.error = false;
     this.formStatus.message = message;
+    return this;
+  },
+  setUpdateStatusFin(feedId, status) {
+    if (feedId) {
+      const feed = this.getFeed(feedId);
+      feed.updStatus = status;
+    }
+    return this;
+  },
+  getUpdateStatusFin(feedId) {
+    if (feedId) {
+      const feed = this.getFeed(feedId);
+      return feed.updStatus;
+    }
     return this;
   },
 };
