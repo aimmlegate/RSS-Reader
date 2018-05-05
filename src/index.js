@@ -121,14 +121,15 @@ const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
 
 const startFeedUpdater = () => {
   const feedsData = state.getData();
-  feedsData.forEach((feed) => {
+  const promisedFeeds = feedsData.map(feed => new Promise((resolve, reject) => {
     const { url, id } = feed;
     getAxiosData(url, corsProxy, { type: 'updateFeed', id })
-      .catch((err) => {
-        console.error(err);
-      })
-      .then(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)));
-  });
+      .then(resp => resolve(resp))
+      .catch(err => reject(err));
+  }));
+  Promise.all(promisedFeeds)
+    .then(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)))
+    .catch(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)));
 };
 
 const feedHandler = (event) => {
