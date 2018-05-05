@@ -87,46 +87,41 @@ const dataDispatcher = {
 const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
   const proxyUrl = new URL('/?url=', cors);
   const newUrl = normalizeUrl(url);
-  return new Promise((resolve, reject) => {
-    axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 })
-      .then((resp) => {
-        const { body } = resp.data;
-        const parsedData = parser.parseFromString(body, 'application/xml');
-        if (checkParseErr((parsedData))) {
-          state.setFormError('Parsing error');
-        } else {
-          const data = parseHtmlCollection(parsedData);
-          dataDispatcher[status.type](data, url, status.id);
-        }
-        if (state.getFormErr()) {
-          input.classList.add('is-invalid');
-          errMessage.textContent = state.getFormMessage();
-        } else {
-          state.setFormNormal('Rendered');
-          input.classList.remove('is-invalid');
-          const data = parseHtmlCollection(parsedData);
-          renderDispatcher[status.type](status.id || data.id);
-        }
-        toStorage(state.getFullStateData());
-        resolve('finish');
-      })
-      .catch((err) => {
-        state.setFormError('Error');
+  return axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 })
+    .then((resp) => {
+      const { body } = resp.data;
+      const parsedData = parser.parseFromString(body, 'application/xml');
+      if (checkParseErr((parsedData))) {
+        state.setFormError('Parsing error');
+      } else {
+        const data = parseHtmlCollection(parsedData);
+        dataDispatcher[status.type](data, url, status.id);
+      }
+      if (state.getFormErr()) {
         input.classList.add('is-invalid');
         errMessage.textContent = state.getFormMessage();
-        reject(err);
-      });
-  });
+      } else {
+        state.setFormNormal('Rendered');
+        input.classList.remove('is-invalid');
+        const data = parseHtmlCollection(parsedData);
+        renderDispatcher[status.type](status.id || data.id);
+      }
+      toStorage(state.getFullStateData());
+    })
+    .catch((err) => {
+      state.setFormError('Error');
+      input.classList.add('is-invalid');
+      errMessage.textContent = state.getFormMessage();
+      console.log(err);
+    });
 };
 
 const startFeedUpdater = () => {
   const feedsData = state.getData();
-  const promisedFeeds = feedsData.map(feed => new Promise((resolve, reject) => {
+  const promisedFeeds = feedsData.map((feed) => {
     const { url, id } = feed;
-    getAxiosData(url, corsProxy, { type: 'updateFeed', id })
-      .then(resp => resolve(resp))
-      .catch(err => reject(err));
-  }));
+    return getAxiosData(url, corsProxy, { type: 'updateFeed', id });
+  });
   Promise.all(promisedFeeds)
     .then(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)))
     .catch(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)));
