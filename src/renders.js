@@ -68,5 +68,4 @@ export const renderTabControl = (data, feedId) => {
 
 export const renderAllFeeds = allData => allData.map(feed => renderFeed(allData, feed.id)).join('\n');
 
-
 export const renderAllTabControls = allData => allData.map(feed => renderTabControl(allData, feed.id)).join('\n');
