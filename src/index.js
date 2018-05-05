@@ -124,11 +124,10 @@ const startFeedUpdater = () => {
   feedsData.forEach((feed) => {
     const { url, id } = feed;
     getAxiosData(url, corsProxy, { type: 'updateFeed', id })
-      .then(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)))
       .catch((err) => {
         console.error(err);
-        setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10));
-      });
+      })
+      .then(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)));
   });
 };
 
