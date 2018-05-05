@@ -72,18 +72,4 @@ export default {
     this.data.formStatus.message = message;
     return this;
   },
-  setUpdateStatusFin(feedId, status) {
-    if (feedId) {
-      const feed = this.getFeed(feedId);
-      feed.updStatus = status;
-    }
-    return this;
-  },
-  getUpdateStatusFin(feedId) {
-    if (feedId) {
-      const feed = this.getFeed(feedId);
-      return feed.updStatus;
-    }
-    return this;
-  },
 };
