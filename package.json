@@ -1,6 +1,6 @@
 {
   "name": "aimml-rss-reaser",
-  "version": "1.0.5",
+  "version": "2.0.5",
   "description": "rss-reaser",
   "main": "index.js",
   "scripts": {
