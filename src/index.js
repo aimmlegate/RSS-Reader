@@ -84,47 +84,46 @@ const dataDispatcher = {
   },
 };
 
-const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
+const getAxiosData = async (url, cors, status = { type: 'newFeed', id: null }) => {
   const proxyUrl = new URL('/?url=', cors);
   const newUrl = normalizeUrl(url);
-  return axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 })
-    .then((resp) => {
-      const { body } = resp.data;
-      const parsedData = parser.parseFromString(body, 'application/xml');
-      if (checkParseErr((parsedData))) {
-        state.setFormError('Parsing error');
-      } else {
-        const data = parseHtmlCollection(parsedData);
-        dataDispatcher[status.type](data, url, status.id);
-      }
-      if (state.getFormErr()) {
-        input.classList.add('is-invalid');
-        errMessage.textContent = state.getFormMessage();
-      } else {
-        state.setFormNormal('Rendered');
-        input.classList.remove('is-invalid');
-        const data = parseHtmlCollection(parsedData);
-        renderDispatcher[status.type](status.id || data.id);
-      }
-      toStorage(state.getFullStateData());
-    })
-    .catch((err) => {
-      state.setFormError('Error');
+  try {
+    const resp = await axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 });
+    const { body } = resp.data;
+    const parsedData = parser.parseFromString(body, 'application/xml');
+    if (checkParseErr((parsedData))) {
+      state.setFormError('Parsing error');
+    } else {
+      const data = parseHtmlCollection(parsedData);
+      dataDispatcher[status.type](data, url, status.id);
+    }
+    if (state.getFormErr()) {
       input.classList.add('is-invalid');
       errMessage.textContent = state.getFormMessage();
-      console.log(err);
-    });
+    } else {
+      state.setFormNormal('Rendered');
+      input.classList.remove('is-invalid');
+      const data = parseHtmlCollection(parsedData);
+      renderDispatcher[status.type](status.id || data.id);
+    }
+    toStorage(state.getFullStateData());
+  } catch (err) {
+    state.setFormError('Error');
+    input.classList.add('is-invalid');
+    errMessage.textContent = state.getFormMessage();
+    console.log(err);
+  }
 };
 
-const startFeedUpdater = () => {
+const startFeedUpdater = async () => {
   const feedsData = state.getData();
   const promisedFeeds = feedsData.map((feed) => {
     const { url, id } = feed;
     return getAxiosData(url, corsProxy, { type: 'updateFeed', id });
   });
-  Promise.all(promisedFeeds)
-    .then(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)))
-    .catch(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)));
+  return Promise.all(promisedFeeds)
+    .catch(err => console.error(err))
+    .then(() => setTimeout(startFeedUpdater, parseInt(state.getTimeout(), 10)));
 };
 
 const feedHandler = (event) => {
@@ -144,8 +143,7 @@ const feedHandler = (event) => {
     input.classList.add('is-invalid');
     errMessage.textContent = state.getFormMessage();
   } else {
-    getAxiosData(formData.feedUrl, corsProxy)
-      .catch(err => console.error(err));
+    getAxiosData(formData.feedUrl, corsProxy);
   }
 };
 
