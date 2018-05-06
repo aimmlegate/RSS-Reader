@@ -16,12 +16,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/aimmlegate/project-lvl3-s234"
+    "url": "https://github.com/aimmlegate/RSS-Reader"
   },
   "author": "Andrey Lukin",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/aimmlegate/project-lvl3-s234/issues"
+    "url": "https://github.com/aimmlegate/RSS-Reader/issues"
   },
   "files": [
     "dist"
