@@ -84,38 +84,39 @@ const dataDispatcher = {
   },
 };
 
-const getAxiosData = async (url, cors, status = { type: 'newFeed', id: null }) => {
+const getAxiosData = (url, cors, status = { type: 'newFeed', id: null }) => {
   const proxyUrl = new URL('/?url=', cors);
   const newUrl = normalizeUrl(url);
-  try {
-    const resp = await axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 });
-    const { body } = resp.data;
-    const parsedData = parser.parseFromString(body, 'application/xml');
-    if (checkParseErr((parsedData))) {
-      state.setFormError('Parsing error');
-    } else {
-      const data = parseHtmlCollection(parsedData);
-      dataDispatcher[status.type](data, url, status.id);
-    }
-    if (state.getFormErr()) {
+  return axios.get(new URL(`${proxyUrl.href}${newUrl}`), { timeout: 5000 })
+    .then((resp) => {
+      const { body } = resp.data;
+      const parsedData = parser.parseFromString(body, 'application/xml');
+      if (checkParseErr((parsedData))) {
+        state.setFormError('Parsing error');
+      } else {
+        const data = parseHtmlCollection(parsedData);
+        dataDispatcher[status.type](data, url, status.id);
+      }
+      if (state.getFormErr()) {
+        input.classList.add('is-invalid');
+        errMessage.textContent = state.getFormMessage();
+      } else {
+        state.setFormNormal('Rendered');
+        input.classList.remove('is-invalid');
+        const data = parseHtmlCollection(parsedData);
+        renderDispatcher[status.type](status.id || data.id);
+      }
+      toStorage(state.getFullStateData());
+    })
+    .catch((err) => {
+      state.setFormError('Error');
       input.classList.add('is-invalid');
       errMessage.textContent = state.getFormMessage();
-    } else {
-      state.setFormNormal('Rendered');
-      input.classList.remove('is-invalid');
-      const data = parseHtmlCollection(parsedData);
-      renderDispatcher[status.type](status.id || data.id);
-    }
-    toStorage(state.getFullStateData());
-  } catch (err) {
-    state.setFormError('Error');
-    input.classList.add('is-invalid');
-    errMessage.textContent = state.getFormMessage();
-    console.log(err);
-  }
+      console.log(err);
+    });
 };
 
-const startFeedUpdater = async () => {
+const startFeedUpdater = () => {
   const feedsData = state.getData();
   const promisedFeeds = feedsData.map((feed) => {
     const { url, id } = feed;
